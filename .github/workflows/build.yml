@@ -1,46 +1,51 @@
 name: Build
 
-on:push:branches: [ main ]workflow_dispatch:
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-jobs:build:runs-on: macos-latest
+jobs:
+  build:
+    runs-on: macos-latest
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Install dependencies
-    run: |
-      brew install ldid dpkg make perl
+      - name: Install dependencies
+        run: |
+          brew install ldid dpkg make perl
 
-  - name: Clone Theos
-    run: |
-      git clone --recursive https://github.com/theos/theos.git $HOME/theos
+      - name: Clone Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-  - name: Fix dm.pl (packaging script)
-    run: |
-      mkdir -p $HOME/theos/bin
-      curl -L https://raw.githubusercontent.com/theos/theos/master/bin/dm.pl -o $HOME/theos/bin/dm.pl
-      chmod +x $HOME/theos/bin/dm.pl
+      - name: Fix dm.pl
+        run: |
+          mkdir -p $HOME/theos/bin
+          curl -L https://raw.githubusercontent.com/theos/theos/master/bin/dm.pl -o $HOME/theos/bin/dm.pl
+          chmod +x $HOME/theos/bin/dm.pl
 
-  - name: Set environment
-    run: |
-      echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+      - name: Set environment
+        run: |
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$HOME/theos/bin" >> $GITHUB_PATH
 
-  - name: Build package
-    run: |
-      make clean package FINALPACKAGE=1
+      - name: Build package
+        run: |
+          make clean package FINALPACKAGE=1
 
-  - name: Upload .deb
-    uses: actions/upload-artifact@v4
-    with:
-      name: package
-      path: packages/*.deb
+      - name: Upload .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: packages/.deb
 
-  - name: Upload raw build (dylib + bundle)
-    uses: actions/upload-artifact@v4
-    with:
-      name: raw-files
-      path: |
-        .theos/obj/**/*.dylib
-        .theos/obj/**/*.bundle
-        #tes
+      - name: Upload raw build (dylib + bundle)
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-files
+          path: |
+            .theos/obj/**/.dylib
+            .theos/obj/**/*.bundle
