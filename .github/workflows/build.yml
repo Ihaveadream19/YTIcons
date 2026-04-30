@@ -1,51 +1,61 @@
-name: Build
+name: Build Tweak
 
 on:
+
   push:
-    branches: [ main ]
+
   workflow_dispatch:
 
 jobs:
+
   build:
-    runs-on: macos-latest
+
+    runs-on: macos-13
 
     steps:
+
       - name: Checkout
+
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          brew install ldid dpkg make perl
+      - name: Install Theos
 
-      - name: Clone Theos
         run: |
+
           git clone --recursive https://github.com/theos/theos.git $HOME/theos
 
-      - name: Fix dm.pl
-        run: |
-          mkdir -p $HOME/theos/bin
-          curl -L https://raw.githubusercontent.com/theos/theos/master/bin/dm.pl -o $HOME/theos/bin/dm.pl
-          chmod +x $HOME/theos/bin/dm.pl
-
-      - name: Set environment
-        run: |
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+
           echo "$HOME/theos/bin" >> $GITHUB_PATH
 
-      - name: Build package
+      - name: Install dependencies
+
+        run: brew install make dpkg ldid
+
+      - name: Setup YouTubeHeader
+
         run: |
+
+          git clone https://github.com/PoomSmart/YouTubeHeader.git
+
+          mkdir -p $HOME/theos/include
+
+          cp -r YouTubeHeader $HOME/theos/include/
+
+      - name: Build tweak
+
+        run: |
+
+          cd $GITHUB_WORKSPACE
+
           make clean package FINALPACKAGE=1
 
-      - name: Upload .deb
-        uses: actions/upload-artifact@v4
-        with:
-          name: package
-          path: packages/.deb
+      - name: Upload deb
 
-      - name: Upload raw build (dylib + bundle)
         uses: actions/upload-artifact@v4
+
         with:
-          name: raw-files
-          path: |
-            .theos/obj/**/.dylib
-            .theos/obj/**/*.bundle
+
+          name: YTIcons
+
+          path: packages/*.deb
